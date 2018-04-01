@@ -1,0 +1,6 @@
+web-scraping
+.vscode
+.vs
+*.code-workspace
+*.sln
+*.pyproj
