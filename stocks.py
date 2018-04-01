@@ -157,7 +157,7 @@ class Instrument(object):
     def __str__(self):
         return(self.get_name() + "," + self.get_code() + "," + self.get_currency() + "," + self.get_sector() + "," + self.get_type())
 
-#TODO: IMPLEMENT RETRY FUNCTIONALITY
+
 def get_soup(url, retries = 10):
     for i in range(retries): 
         try: 
@@ -166,7 +166,8 @@ def get_soup(url, retries = 10):
             if i < retries-1:
                 continue
             else:
-                raise Exception("Faulty internet connection. Could not access '" + url + "'" )
+                raise Exception("Faulty internet connection. Could not access '" + url + "'" +
+                 "\nTried " + str(retries) + " times")
         else:
             break
 
@@ -230,7 +231,7 @@ def clean_num(num_string):
 
     return num_string
 
-#TODO: 
+
 def get_trading_data(trading_soup):
     """Returns TradeDataBanks object containing data for each trade day of a particular Instrument
     """
