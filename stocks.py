@@ -1,13 +1,22 @@
 import csv
 import datetime
-import json
 import os
+import pprint
 import string
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from bs4 import BeautifulSoup as Soup
 
+# TODO: 
+# MODIFY update_trade_data function to check last date updated and set url with that date as a starting date
+# so that the number of rows to update is much lower than normal
+
+# TODO:
+# Implement store_data function, utilising .py files rather than .csv files
+
+# TODO: 
+# Implement check to ensure that all pages checked have data to be access and skips them otherwise
 # Constants
 MAIN_MARKET_URL = "https://www.jamstockex.com/market-data/listed-companies/main-market"
 JR_MARKET_URL = "https://www.jamstockex.com/market-data/listed-companies/junior-market"
@@ -81,31 +90,27 @@ class TradeData(object):
     # Getter methods
     def get_date(self):
         return self.date
-
     def get_cur_yr_high(self):
         return self.cur_yr_high
-
     def get_cur_yr_low(self):
         return self.cur_yr_low
-
     def get_prev_dividends(self):
         return self.prev_yr_dvds
-
-    def get_current_dividents(self):
+    def get_current_dividends(self):
         return self.cur_yr_dvds
-
     def get_today_high(self):
         return self.today_high
-
     def get_today_low(self):
         return self.today_low
-
     def get_last_traded_price(self):
         return self.last_traded_price
-
     def get_closing_price(self):
         return self.closing_price
+    def get_volume(self):
+        return self.volume
 
+    def __repr__(self):
+        return "stocks.TradeData(" + repr(self.get_date()) + ", " + str(self.get_cur_yr_high()) + ", " + str(self.get_cur_yr_low()) + ", " + str(self.get_prev_dividends()) + ", " + str(self.get_current_dividends()) + ", " + str(self.get_volume) + ", " + str(self.get_today_high()) + ", " + str(self.get_today_low()) + ", " + str(self.get_last_traded_price()) + ", " + str(self.get_closing_price()) + ")"
     def __str__(self):
         return str(self.date) + "," + str(self.cur_yr_high) + "," + str(self.cur_yr_low) + "," + str(self.prev_yr_dvds) + "," + str(self.cur_yr_dvds) + "," + str(self.volume) + "," + str(self.today_high) + "," + str(self.today_low) + "," + str(self.last_traded_price) + "," + str(self.closing_price)
 
@@ -130,19 +135,14 @@ class Instrument(object):
 
     def get_name(self):
         return self.name
-
     def get_code(self):
         return self.code
-
     def get_currency(self):
         return self.currency
-
     def get_sector(self):
         return self.sector
-
     def get_type(self):
         return self.s_type
-
     def get_trade_data(self):
         return self.trade_data
 
@@ -157,6 +157,8 @@ class Instrument(object):
     def __str__(self):
         return(self.get_name() + "," + self.get_code() + "," + self.get_currency() + "," + self.get_sector() + "," + self.get_type())
 
+    def __repr__(self):
+        return "Instrument(" + self.get_name() + ", " + self.get_code() + ", " + self.get_currency() + ", " + self.get_type() + ", " + self.get_sector() + ", " + repr(self.get_trade_data()) + ")"
 
 def get_soup(url, retries = 10):
     for i in range(retries): 
@@ -174,7 +176,7 @@ def get_soup(url, retries = 10):
     page_html = page.read()
     page_soup = Soup(page_html, "lxml")
     return page_soup
-
+    
 
 def get_mkt_soup(url=MAIN_MARKET_URL):
     assert url == MAIN_MARKET_URL or url == JR_MARKET_URL
@@ -318,4 +320,15 @@ def main():
         print("Successfully stored: " + company.get_name() + " data")
 
 if __name__ == "__main__":
-    main()
+    # main()
+    # update_companies()
+    path = "dweqerqwer.txt"
+    a = Instrument("Happy Corp", "HC", "JMD")
+    # print(a)
+    f = open(path, "w")
+    print(repr(a), file=f)
+    f.write("fuck you")
+    f.close()
+    # with open(path, "w") as f:
+    #     print(repr(a), file=f)
+    
