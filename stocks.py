@@ -58,6 +58,8 @@ class TradeDataBanks(object):
             rv += str(day) + "\n"
 
         return rv
+    def __repr__(self):
+        return "TradeDataBanks(" + repr(self.trades) + ")"
 
     def get_most_recent(self):
         pass
