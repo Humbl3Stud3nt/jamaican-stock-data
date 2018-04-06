@@ -292,7 +292,10 @@ def update_companies():
             for company in get_company_data(get_mkt_soup(MAIN_MARKET_URL)):
                 fp.write(str(company) + "\n")
             for company in get_company_data(get_mkt_soup(JR_MARKET_URL)):
-                fp.write(str(company) + "\n")
+            companies.append(company)
+        with open(file_path, "w") as fp:
+            print("from stocks import *\n", file=fp)
+            print("ALL_DATA = " +pprint.pformat(companies, indent=4), file=fp) 
         print("Successfully updated.")
 
 
