@@ -2,6 +2,7 @@ import csv
 import datetime
 import os
 import pprint
+import json
 import string
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -17,6 +18,8 @@ from bs4 import BeautifulSoup as Soup
 
 # TODO:
 # Implement check to ensure that all pages checked have data to be access and skips them otherwise
+
+
 # Constants
 MAIN_MARKET_URL = "https://www.jamstockex.com/market-data/listed-companies/main-market"
 JR_MARKET_URL = "https://www.jamstockex.com/market-data/listed-companies/junior-market"
@@ -56,8 +59,8 @@ class TradeDataBanks(object):
         rv = ",".join(TradeData.HEADERS) + "\n"
         for day in self.get_trade_days():
             rv += str(day) + "\n"
-
         return rv
+
     def __repr__(self):
         return "TradeDataBanks(" + repr(self.trades) + ")"
 
@@ -72,7 +75,7 @@ class TradeData(object):
     HEADERS = ("DATE", "CURRENT YEAR HIGH", "CURRENT YEAR LOW", "PREVIOUS YEAR DIVIDENDS",
                "CURRENT YEAR DIVIDENDS", "VOLUME", "TODAY'S HIGH", "TODAY'S LOW", "LAST TRADED PRICE", "CLOSING PRICE")
 
-    def __init__(self, date, cur_yr_high, cur_yr_low, prev_yr_dvds, cur_yr_dvds, vol, today_high, today_low, last_traded_price, closing_price):
+    def __init__(self, date=datetime.date(1, 1, 1), cur_yr_high=0, cur_yr_low=0, prev_yr_dvds=0.0, cur_yr_dvds=0.0, vol=0, today_high=0.0, today_low=0.0, last_traded_price=0.0, closing_price=0.0):
         assert isinstance(date, datetime.date)
         assert type(cur_yr_high) and type(cur_yr_low) and type(cur_yr_dvds) and type(prev_yr_dvds) and type(
             today_low) and type(today_high) and type(last_traded_price) and type(closing_price) is float
@@ -112,7 +115,7 @@ class TradeData(object):
         return self.volume
 
     def __repr__(self):
-        return "TradeData(" + repr(self.get_date()) + ", " + str(self.get_cur_yr_high()) + ", " + str(self.get_cur_yr_low()) + ", " + str(self.get_prev_dividends()) + ", " + str(self.get_current_dividends()) + ", " + str(self.get_volume) + ", " + str(self.get_today_high()) + ", " + str(self.get_today_low()) + ", " + str(self.get_last_traded_price()) + ", " + str(self.get_closing_price()) + ")"
+        return "TradeData(" + repr(self.date) + ", " + str(self.cur_yr_high) + ", " + str(self.cur_yr_low) + ", " + str(self.prev_yr_dvds) + ", " + str(self.cur_yr_dvds) + ", " + str(self.volume) + ", " + str(self.today_high) + ", " + str(self.today_low) + ", " + str(self.last_traded_price) + ", " + str(self.closing_price) + ")"
     
     def __str__(self):
         return str(self.date) + "," + str(self.cur_yr_high) + "," + str(self.cur_yr_low) + "," + str(self.prev_yr_dvds) + "," + str(self.cur_yr_dvds) + "," + str(self.volume) + "," + str(self.today_high) + "," + str(self.today_low) + "," + str(self.last_traded_price) + "," + str(self.closing_price)
@@ -166,7 +169,7 @@ class Instrument(object):
         return(self.get_name() + "," + self.get_code() + "," + self.get_currency() + "," + self.get_sector() + "," + self.get_type())
 
     def __repr__(self):
-        return "Instrument(" + '"' + self.get_name() + '"' + ", " + '"' + self.get_code() + '"' + ", " + '"' + self.get_currency() + '"' + ", " + '"' + self.get_type() + '"' + ", " + '"' + self.get_sector() + '"' + ", " + repr(self.get_trade_data()) + ")"
+        return "Instrument(" + '"' + self.name + '"' + ", " + '"' + self.code + '"' + ", " + '"' + self.currency + '"' + ", " + '"' + self.s_type + '"' + ", " + '"' + self.sector + '"' + ", " + repr(self.trade_data) + ")"
 
 
 def get_soup(url, retries=10):
@@ -184,6 +187,7 @@ def get_soup(url, retries=10):
 
     page_html = page.read()
     page_soup = Soup(page_html, "lxml")
+    page.close()
     return page_soup
 
 
@@ -233,24 +237,24 @@ def get_trading_soup(url):
     return get_soup(url)
 
 
-def clean_num(num_string):
-    num_string = num_string.strip()
-
-    for char in ILLEGAL_NUM_CHARS:
-        if char in num_string:
-            num_string = num_string.replace(char, "")
-
-    return num_string
-
-
 def get_trading_data(trading_soup):
     """Returns TradeDataBanks object containing data for each trade day of a particular Instrument
     """
     assert isinstance(trading_soup, Soup)
+
+    def clean_num(num_string):
+        """Helper function to get rid of whitespace and other illegal characters,
+        making a formatted string of a number usable for calculations"""
+        num_string = num_string.strip()
+
+        for char in ILLEGAL_NUM_CHARS:
+            if char in num_string:
+                num_string = num_string.replace(char, "")
+
+        return num_string
+
     trade_days = []
-
     table_body = trading_soup.find("table").find("tbody")
-
     table_rows = table_body.findAll("tr")
 
     for row in table_rows:
@@ -258,7 +262,6 @@ def get_trading_data(trading_soup):
 
         date = columns[1].text.strip()
         date = date.split("-")
-
         date = datetime.date(int(date[0]), int(date[1]), int(date[2]))
 
         cur_yr_high = float(clean_num(columns[3].text))
@@ -268,11 +271,15 @@ def get_trading_data(trading_soup):
 
         if prev_yr_dvds.isdecimal():
             prev_yr_dvds = float(prev_yr_dvds)
+        else:
+            prev_yr_dvds = 0.0
 
         cur_yr_dvds = clean_num(columns[6].text)
 
         if cur_yr_dvds.isdecimal():
             cur_yr_dvds = float(cur_yr_dvds)
+        else:
+            cur_yr_dvds = 0.0
 
         volume = int(clean_num(columns[7].text))
 
@@ -281,8 +288,8 @@ def get_trading_data(trading_soup):
         last_traded_price = float(clean_num(columns[10].text))
         closing_price = float(clean_num(columns[11].text))
 
-        trade_days.append(TradeData(date, cur_yr_high, cur_yr_low, prev_yr_dvds,
-                                    cur_yr_dvds, volume, today_high, today_low, last_traded_price, closing_price))
+        trade_days.append(TradeData(date=date, cur_yr_high=cur_yr_high, cur_yr_low=cur_yr_low, prev_yr_dvds=prev_yr_dvds,
+                                    cur_yr_dvds=cur_yr_dvds, vol=volume, today_high=today_high, today_low=today_low, last_traded_price=last_traded_price, closing_price=closing_price))
     return TradeDataBanks(trade_days)
 
 
@@ -291,10 +298,8 @@ def update_companies():
 
     try:
         urlopen("https://www.jamstockex.com")
-    # except URLError:
-    #     raise Exception("Faulty internet connection. Could not update.")
     except HTTPError:
-        raise Exception("Fatal Error. Page not found")
+        raise Exception("Could not update.")
     else:
         companies = []
         for company in get_company_data(get_mkt_soup(MAIN_MARKET_URL)):
@@ -306,7 +311,7 @@ def update_companies():
             print("# DO NOT EDIT THIS FILE!!!!!!!#", file=fp)
             print("###############################", file=fp)
             print("from stocks import Instrument, TradeData, TradeDataBanks\n", file=fp)
-            print("ALL_DATA = " +pprint.pformat(companies, indent=4), file=fp) 
+            print("ALL_DATA = " + pprint.pformat(companies, indent=4), file=fp) 
         print("Successfully updated.")
 
 
@@ -322,15 +327,44 @@ def load_companies():
         for company in companies:
             yield company
 
+# FIXME: create a generator that allows incremental writing of the list object to a .py file for later reference
+def store_data():
+    company_trade_data = []
+    file_path = "COMPANY_TRADE_DATA.py"
+    # with open(file_path, "w") as fp:
 
-def main():
-    update_companies()
     for company in load_companies():
+        # print(pprint.isrecursive(company))
+        # break
         company.update_trade_data(get_trading_data(
             get_trading_soup(gen_trade_data_url(company.get_code()))))
-        company.store_data()
+        company_trade_data.append(company)
+        with open(file_path, "w") as fp:
+            fp.write("###############################\n# DO NOT EDIT THIS FILE!!!!!!!#\n###############################\n")
+            fp.write("import datetime\n")
+            fp.write("from stocks import Instrument, TradeData, TradeDataBanks\n")
+            
+            print("ALL_DATA = " + pprint.pformat(company_trade_data), file=fp)
+            break
+            
+
         print("Successfully stored: " + company.get_name() + " data")
 
 
-if __name__ == "__main__":
+def main():
     update_companies()
+    # for company in load_companies():
+    #     company.update_trade_data(get_trading_data(
+    #         get_trading_soup(gen_trade_data_url(company.get_code()))))
+    #     company.store_data()
+    #     print("Successfully stored: " + company.get_name() + " data")
+    store_data()
+    # a = Instrument("happy stock", "HS", "JMD")
+    # file_path = "stuff.py"
+    # with open(file_path, "w") as fp:
+    #     fp.write("a = " + pprint.saferepr(a))
+
+
+if __name__ == "__main__":
+    main()
+
