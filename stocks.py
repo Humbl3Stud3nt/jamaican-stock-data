@@ -353,16 +353,7 @@ def store_data():
 
 def main():
     update_companies()
-    # for company in load_companies():
-    #     company.update_trade_data(get_trading_data(
-    #         get_trading_soup(gen_trade_data_url(company.get_code()))))
-    #     company.store_data()
-    #     print("Successfully stored: " + company.get_name() + " data")
     store_data()
-    # a = Instrument("happy stock", "HS", "JMD")
-    # file_path = "stuff.py"
-    # with open(file_path, "w") as fp:
-    #     fp.write("a = " + pprint.saferepr(a))
 
 
 if __name__ == "__main__":
