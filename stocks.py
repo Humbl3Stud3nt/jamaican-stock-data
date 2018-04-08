@@ -137,6 +137,7 @@ class Instrument(object):
         self.sector = business_sector
         self.s_type = s_type
         self.trade_data = trade_data
+        
     # Getters
 
     def get_name(self):
@@ -331,11 +332,8 @@ def load_companies():
 def store_data():
     company_trade_data = []
     file_path = "COMPANY_TRADE_DATA.py"
-    # with open(file_path, "w") as fp:
 
     for company in load_companies():
-        # print(pprint.isrecursive(company))
-        # break
         company.update_trade_data(get_trading_data(
             get_trading_soup(gen_trade_data_url(company.get_code()))))
         company_trade_data.append(company)
