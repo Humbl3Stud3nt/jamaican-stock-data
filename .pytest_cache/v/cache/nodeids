@@ -1,0 +1,6 @@
+[
+  "test_stocks.py::StocksFunctionsTesting::test_gen_trade_data_url",
+  "test_stocks.py::StocksFunctionsTesting::test_get_soup",
+  "test_stocks.py::StocksFunctionsTesting::test_load_companies",
+  "test_stocks.py::StocksFunctionsTesting::test_update_companies"
+]

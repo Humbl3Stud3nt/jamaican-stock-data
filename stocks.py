@@ -52,8 +52,9 @@ class TradeDataBanks(object):
         assert type(new_days) is list
         self.trades.extend(new_days)
 
-    def load(self, file):
-        pass
+    def sort(self):
+        sort_func = lambda x: TradeData.get_date(x)
+        self.trades = sorted(self.trades, key=sort_func)
 
     def __str__(self):
         rv = ",".join(TradeData.HEADERS) + "\n"
@@ -156,19 +157,18 @@ class Instrument(object):
     def update_trade_data(self, trade_data):
         self.trade_data = trade_data
 
-    def store_data(self):
-        file = STOCK_INFO_DIR + self.get_name() + ".csv"
-        with open(file, "w") as f:
-            print(str(self.get_trade_data()), file=f)
 
     def __str__(self):
-        return(self.get_name() + "," + self.get_code() + "," + self.get_currency() + "," + self.get_sector() + "," + self.get_type())
+        return self.get_name() + "," + self.get_code() + "," + self.get_currency() + "," + self.get_sector() + "," + self.get_type()
 
     def __repr__(self):
         return "Instrument(" + '"' + self.name + '"' + ", " + '"' + self.code + '"' + ", " + '"' + self.currency + '"' + ", " + '"' + self.s_type + '"' + ", " + '"' + self.sector + '"' + ", " + repr(self.trade_data) + ")"
 
 
 def get_soup(url, retries=10):
+    """
+    Accept a url as a string, if the url is valid and internet connection is active, return Soup
+    object representation of the page. Otherwise, raise an exception """
     for i in range(retries):
         try:
             page = urlopen(url)
@@ -292,13 +292,17 @@ def get_trading_data(trading_soup):
 
 
 def update_companies():
+    print("Attempting to update...")
     file_path = "COMPANY_DATA.py"
 
     try:
         urlopen("https://www.jamstockex.com")
     except HTTPError:
         raise Exception("Could not update.")
+    except URLError:
+        raise Exception("Could not update.")
     else:
+        print("Updating list of companies....")
         companies = []
         for company in get_company_data(get_mkt_soup(MAIN_MARKET_URL)):
             companies.append(company)
@@ -344,8 +348,9 @@ def store_data():
 
 
 def main():
-    update_companies()
-    store_data()
+    # update_companies()
+    # store_data()
+    pass
 
 
 if __name__ == "__main__":
