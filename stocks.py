@@ -373,7 +373,7 @@ def update_companies():
     except URLError:
         raise Exception("Could not update.")
     else:
-        print("Updating list of companies....")
+        print("Updating list of companies...")
         companies = []
         for company in get_company_data(get_soup(MAIN_MARKET_URL)):
             companies.append(company)
