@@ -2,8 +2,7 @@ import unittest
 
 from stocks import *
 
-# TODO:
-# Implement unit tests for all functions and classes
+# TODO: Implement unit tests for all functions and classes
 
 class StocksFunctionsTesting(unittest.TestCase):
     def test_get_soup(self):
@@ -24,17 +23,14 @@ class StocksFunctionsTesting(unittest.TestCase):
         pass
 
     
-class StocksInstrumentTesting(unittest.TestCase):
+class TestInstrumentClass(unittest.TestCase):
     pass
 
-class StocksTradeDataTesting(unittest.TestCase):
+class TestTradeDataClass(unittest.TestCase):
     pass
 
-class StocksTradeDataBanksTesting(unittest.TestCase):
+class TestTradeDataBanksClass(unittest.TestCase):
     pass
-
-
-
 
 
 if __name__ == "__main__":
