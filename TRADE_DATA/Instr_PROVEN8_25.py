@@ -3,4 +3,4 @@
 ###############################
 import datetime
 from stocks import Instrument
-INSTR_PROVEN8_25 = Instrument("PROVEN 8.25 CUMULATIVE REDEEMABLE PREFERENCE SHARES", "PROVEN8.25", "JMD", "PREFERENCE", "FINANCE", None, last_updated=1524219373.48749)
+DATA = Instrument("PROVEN 8.25 CUMULATIVE REDEEMABLE PREFERENCE SHARES", "PROVEN8.25", "JMD", "PREFERENCE", "FINANCE", None, last_updated=1526955148.147725)
