@@ -1,6 +1,10 @@
 [
-  "test_stocks.py::StocksFunctionsTesting::test_gen_trade_data_url",
-  "test_stocks.py::StocksFunctionsTesting::test_get_soup",
-  "test_stocks.py::StocksFunctionsTesting::test_load_companies",
-  "test_stocks.py::StocksFunctionsTesting::test_update_companies"
+  "tests.py::StocksFunctionsTesting::test_gen_trade_data_url",
+  "tests.py::StocksFunctionsTesting::test_get_soup",
+  "tests.py::StocksFunctionsTesting::test_load_companies",
+  "tests.py::StocksFunctionsTesting::test_update_companies",
+  "tests.py::TestGetRecordIndexByDate::test_get_record_index_by_date_get_crecord_out_of_range",
+  "tests.py::TestGetRecordIndexByDate::test_get_record_index_by_date_get_first_record",
+  "tests.py::TestGetRecordIndexByDate::test_get_record_index_by_date_get_last_record",
+  "tests.py::TestGetRecordIndexByDate::test_get_record_index_by_date_get_middle_record"
 ]
