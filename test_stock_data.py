@@ -2,7 +2,7 @@ import unittest
 import datetime
 from bs4 import BeautifulSoup as Soup
 
-from stocks import Instrument, get_soup, load_companies, update_companies
+from stock_data import Instrument, get_soup, load_companies, update_companies
 
 # TODO: Implement unit tests for all functions and classes
 def create_instrument(num_trades):
@@ -12,25 +12,18 @@ def create_instrument(num_trades):
 
     return instr
 
-@unittest.skip("Not implemented yet")
-class StocksFunctionsTesting(unittest.TestCase):
-    def test_get_soup(self):
+class TestGetSoup(unittest.TestCase):
+    def test_get_soup_with_valid_url(self):
+        self.assertTrue("http://www.jamstockex.com", Soup)
 
-        # TURN OFF INTERNET CONNECTION WHEN TESTING THIS
+    def test_get_soup_with_invalid_url(self):
         with self.assertRaises(Exception):
-            get_soup("https://www.jamstockex.com")
-
-        self.assertTrue(isinstance(
-            get_soup("http://www.jamstockex.com"), Soup))
-
-    def test_gen_trade_data_url(self):
+            get_soup("http://www.jamstockexcom")
+    
+    @unittest.skip("Not implemented yet")
+    def test_get_soup_with_bad_connection(self):
         pass
 
-    def test_update_companies(self):
-        pass
-
-    def test_load_companies(self):
-        pass
 
 class TestGetRecordIndexByDate(unittest.TestCase):
     def setUp(self):
@@ -49,12 +42,11 @@ class TestGetRecordIndexByDate(unittest.TestCase):
         self.assertIsNone(self.instr.trade_data.get_record_index_by_date(datetime.date.today() + datetime.timedelta(days=99)))
         
 
-class TestInstrumentPlot(unittest.TestCase):
+class TestInstrument__Plot(unittest.TestCase):
     def setUp(self):
         from TRADE_DATA import Instr_SVL
         self.instr = Instr_SVL.DATA
-        # self.instr.update()
-        # self.instr.store()
+
 
     def test_plot_with_valid_dates(self):
         start_date = datetime.date(2016, 8, 1)
@@ -93,7 +85,7 @@ class TestInstrumentPlot(unittest.TestCase):
             self.instr.plot(start_date, end_date)
 
 
-class TestInstrumentPlot_for(unittest.TestCase):
+class TestInstrument__Plot_for(unittest.TestCase):
     def setUp(self):
         from TRADE_DATA import Instr_SVL
         self.instr = Instr_SVL.DATA
@@ -114,15 +106,91 @@ class TestInstrumentPlot_for(unittest.TestCase):
             self.instr.plot_for(str(num_days)+"-d")
 
     
+class TestTradeData__equal__(unittest.TestCase):
+    def test__eq__with_identical_TradeData_objects(self):
+        a = Instrument.TradeData(date=datetime.date(2012, 1, 1))
+        b = Instrument.TradeData(date=datetime.date(2012, 1, 1))
+        print(a)
+        print(b)
+        self.assertTrue(a == b)
+
+    def test__eq__with_TradeData_objects_with_different_dates(self):
+        a = Instrument.TradeData(date=datetime.date(2012, 1, 1))
+        b = Instrument.TradeData(date=datetime.date(2012, 1, 2))
+        print(a)
+        print(b)
+        self.assertFalse(a == b)
+
+    def test__eq__with_TradeData_objects_with_different_cur_yr_high(self):
+        a = Instrument.TradeData(cur_yr_high=1)
+        b = Instrument.TradeData(cur_yr_high=2)
+        self.assertFalse(a == b)
+
+    def test__eq__with_TradeData_objects_with_different_cur_yr_low(self):
+        a = Instrument.TradeData(cur_yr_low=1)
+        b = Instrument.TradeData(cur_yr_low=2)
+        self.assertFalse(a == b)
+
+    def test__eq__with_TradeData_objects_with_different_prev_dividends(self):
+        a = Instrument.TradeData(prev_yr_dvds=1)
+        b = Instrument.TradeData(prev_yr_dvds=2)
+        self.assertFalse(a == b)
+    
+    def test__eq__with_TradeData_objects_with_different_cur_dividends(self):
+        a = Instrument.TradeData(cur_yr_dvds=1)
+        b = Instrument.TradeData(cur_yr_dvds=2)
+        self.assertFalse(a == b)
+
+    def test__eq__with_TradeData_objects_with_different_today_high(self):
+        a = Instrument.TradeData(today_high=1)
+        b = Instrument.TradeData(today_high=2)
+        self.assertFalse(a == b)
+
+    def test__eq__with_TradeData_objects_with_different_today_low(self):
+        a = Instrument.TradeData(today_low=1)
+        b = Instrument.TradeData(today_low=2)
+        self.assertFalse(a == b)
+
+    def test__eq__with_TradeData_objects_with_different_last_traded_price(self):
+        a = Instrument.TradeData(last_traded_price=1)
+        b = Instrument.TradeData(last_traded_price=2)
+        self.assertFalse(a == b)
+
+    def test__eq__with_TradeData_objects_with_different_closing_price(self):
+        a = Instrument.TradeData(closing_price=1)
+        b = Instrument.TradeData(closing_price=2)
+        self.assertFalse(a == b)
+    
+    def test__eq__with_TradeData_objects_with_different_volume_traded(self):
+        a = Instrument.TradeData(vol=1)
+        b = Instrument.TradeData(vol=2)
+        self.assertFalse(a == b)
+
 
 @unittest.skip("Not implemented yet")
-class TestTradeDataClass(unittest.TestCase):
+class TestTradeDataBanks__sort(unittest.TestCase):
+    def setUp(self):
+        day_list = [Instrument.TradeData(date=datetime.date(2012, 1, i)) for i in range(1, 30)]
+        self.dataBanks = Instrument.TradeDataBanks(day_list)
+    
+    def test__sort__(self):
+        pass
+
+@unittest.skip("Not implemented yet")
+class TestTradeDataBanks__add__(unittest.TestCase):
     pass
 
 @unittest.skip("Not implemented yet")
-class TestTradeDataBanksClass(unittest.TestCase):
+class TestTradeDataBanks__get_record_index_by_date(unittest.TestCase):
     pass
 
+@unittest.skip("Not implemented yet")
+class TestTradeDataBanks__get_record_by_date(unittest.TestCase):
+    pass
+
+
+def main():
+    unittest.main(module="test_stock_data", verbosity=5)
 
 if __name__ == "__main__":
-    unittest.main(verbosity=5)
+    main()
