@@ -4,4 +4,5 @@ web-scraping
 *.code-workspace
 *.sln
 *.pyproj
+*.pycache
 STOCK DATA SCRIPTS PURPOSE.md
