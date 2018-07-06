@@ -10,8 +10,6 @@ import pylab
 def plot(metric, *instrs, start_date, end_date):
     pass
 
-def get_growth_rate(instr):
-    pass
 
 def get_fastest_growing(start_date, end_date, *instrs):
     pass

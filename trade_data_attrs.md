@@ -1,0 +1,10 @@
+- closing_price
+- cur_yr_dvds
+- cur_yr_high
+- cur_yr_low
+- date
+- last_traded_price
+- prev_yr_dvds
+- today_high
+- today_low
+- volume

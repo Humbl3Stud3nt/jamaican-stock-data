@@ -2,7 +2,8 @@ import unittest
 import datetime
 from bs4 import BeautifulSoup as Soup
 
-from stock_data import Instrument, get_soup, load_companies, update_companies
+from stock_data import Instrument, load_companies, update_companies
+from stock_data_scraping import get_soup
 
 # TODO: Implement unit tests for all functions and classes
 def create_instrument(num_trades):
@@ -23,24 +24,6 @@ class TestGetSoup(unittest.TestCase):
     @unittest.skip("Not implemented yet")
     def test_get_soup_with_bad_connection(self):
         pass
-
-
-class TestGetRecordIndexByDate(unittest.TestCase):
-    def setUp(self):
-        self.instr = create_instrument(10)
-        
-    def test_get_record_index_by_date_get_last_record(self):
-        self.assertEqual(self.instr.trade_data.get_record_index_by_date(datetime.date.today() + datetime.timedelta(days=9)), 9)
-    
-    def test_get_record_index_by_date_get_middle_record(self):
-        self.assertEqual(self.instr.trade_data.get_record_index_by_date(datetime.date.today() + datetime.timedelta(days=5)), 5)
-
-    def test_get_record_index_by_date_get_first_record(self):
-        self.assertEqual(self.instr.trade_data.get_record_index_by_date(datetime.date.today()), 0)
-
-    def test_get_record_index_by_date_get_crecord_out_of_range(self):
-        self.assertIsNone(self.instr.trade_data.get_record_index_by_date(datetime.date.today() + datetime.timedelta(days=99)))
-        
 
 class TestInstrument__Plot(unittest.TestCase):
     def setUp(self):
@@ -110,15 +93,11 @@ class TestTradeData__equal__(unittest.TestCase):
     def test__eq__with_identical_TradeData_objects(self):
         a = Instrument.TradeData(date=datetime.date(2012, 1, 1))
         b = Instrument.TradeData(date=datetime.date(2012, 1, 1))
-        print(a)
-        print(b)
         self.assertTrue(a == b)
 
     def test__eq__with_TradeData_objects_with_different_dates(self):
         a = Instrument.TradeData(date=datetime.date(2012, 1, 1))
         b = Instrument.TradeData(date=datetime.date(2012, 1, 2))
-        print(a)
-        print(b)
         self.assertFalse(a == b)
 
     def test__eq__with_TradeData_objects_with_different_cur_yr_high(self):
@@ -171,26 +150,60 @@ class TestTradeData__equal__(unittest.TestCase):
 class TestTradeDataBanks__sort(unittest.TestCase):
     def setUp(self):
         day_list = [Instrument.TradeData(date=datetime.date(2012, 1, i)) for i in range(1, 30)]
-        self.dataBanks = Instrument.TradeDataBanks(day_list)
+        self.data_banks = Instrument.TradeDataBanks(day_list)
     
-    def test__sort__(self):
-        pass
+    def test_sort(self):
+        self.data_banks.sort()
+        for i in range(1, len(self.data_banks.trades)):
+            self.assertTrue(self.data_banks.trades[i].get_date() < self.data_banks.trades[i + 1].get_date())
+
 
 @unittest.skip("Not implemented yet")
 class TestTradeDataBanks__add__(unittest.TestCase):
     pass
 
-@unittest.skip("Not implemented yet")
+
 class TestTradeDataBanks__get_record_index_by_date(unittest.TestCase):
-    pass
+    def setUp(self):
+        self.instr = create_instrument(10)
+        
+    def test_get_record_index_by_date_get_last_record(self):
+        self.assertEqual(self.instr.trade_data.get_record_index_by_date(datetime.date.today() + datetime.timedelta(days=9)), 9)
+    
+    def test_get_record_index_by_date_get_middle_record(self):
+        self.assertEqual(self.instr.trade_data.get_record_index_by_date(datetime.date.today() + datetime.timedelta(days=5)), 5)
+
+    def test_get_record_index_by_date_get_first_record(self):
+        self.assertEqual(self.instr.trade_data.get_record_index_by_date(datetime.date.today()), 0)
+
+    def test_get_record_index_by_date_get_crecord_out_of_range(self):
+        self.assertIsNone(self.instr.trade_data.get_record_index_by_date(datetime.date.today() + datetime.timedelta(days=99)))
+
 
 @unittest.skip("Not implemented yet")
 class TestTradeDataBanks__get_record_by_date(unittest.TestCase):
     pass
 
 
+class TestTradeDataBanks__update(unittest.TestCase):
+    def setUp(self):
+        trades = [Instrument.TradeData(date=datetime.date(2012, 4, i)) for i in range(1, 15)] #TradeData Objects for April 1, 2012 to April 14, 2012
+        self.data_banks = Instrument.TradeDataBanks(trades)
+
+    def test_update_with_TradeDataBanks_with_no_overlap(self):
+        new_days = [Instrument.TradeData(date=datetime.date(2012, 4, i)) for i in range(15, 31)] #TradeData objects for April 15, 2012 to April 30, 2012
+        self.data_banks.update(new_days)
+
+        self.assertEqual(self.data_banks, Instrument.TradeDataBanks([Instrument.TradeData(date=datetime.date(2012, 4, i)) for i in range(1, 31)]))
+
+    def test_update_with_TradeDataBanks_with_overlap(self):
+        new_days = [Instrument.TradeData(date=datetime.date(2012, 4, i)) for i in range(5, 31)]
+        self.data_banks.update(new_days)
+
+        self.assertEqual(self.data_banks, Instrument.TradeDataBanks([Instrument.TradeData(date=datetime.date(2012, 4, i)) for i in range(1, 31)]))
+
 def main():
-    unittest.main(module="test_stock_data", verbosity=5)
+    unittest.main(module=__name__, verbosity=5)
 
 if __name__ == "__main__":
-    main()
+    unittest.main(verbosity=5)
