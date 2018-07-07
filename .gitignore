@@ -9,5 +9,5 @@ TRADE_DATA/__pycache__
 */*.pyc
 
 ./.pytest_cache
-
+gui.py
 STOCK DATA SCRIPTS PURPOSE.md
