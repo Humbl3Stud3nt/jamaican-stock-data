@@ -2,8 +2,9 @@ import unittest
 import datetime
 from bs4 import BeautifulSoup as Soup
 
-from stock_data import Instrument, load_companies, update_companies
-from stock_data_scraping import get_soup
+from stock_data import Instrument
+
+from stock_data_scraping import get_soup, load_companies, update_companies
 
 # TODO: Implement unit tests for all functions and classes
 def create_instrument(num_trades):
