@@ -80,73 +80,86 @@ class Instrument(object):
         self.trade_data = Instrument.TradeDataBanks.__add__(
             self.trade_data, trade_data)
 
-    #FIXME:
-    def calc_growth_rate(self, start_date, end_date=None):
-        pass
 
 
-    def plot_for(self, period="3-m"):
+    def plot_for(self, period="3-m", option="closing price"):
         """"
         Plot for a period of time up to the current date
         """
         num_days = _parse_period(period)
         end_date = self.trade_data.get_trade_days()[-1].get_date()
         start_date = end_date - datetime.timedelta(num_days)
-        self.plot(start_date, end_date)
+        self.plot(start_date, end_date, option)
 
-    def plot(self, start_date, end_date=None):
+    def plot(self, start_date, end_date=None, option="closing price"):
         """
-        Create a graph showing stock price over a certain period of time,
-        specified by 'start_date' and 'end_date'
+        Create a graph showing the value of selected metrics over a certain period of time,
+        specified by 'start_date' and 'end_date' and 'option'
         """
-        # FIXME: Implement functionality to choose which metrics to plot
-        
-        trade_data = self.get_trade_data()
-        earliest_record = trade_data.get_trade_days()[0].get_date()
-        latest_record = trade_data.get_trade_days()[-1].get_date()
+        def _get_func(option):
+            OPTION_TABLE = {"closing price":Instrument.TradeData.get_closing_price,
+                            "cur_year_dvds":Instrument.TradeData.get_current_dividends,
+                            "prev_year_dvds": Instrument.TradeData.get_prev_dividends,
+                            "day_high":Instrument.TradeData.get_today_high,
+                            "day_low": Instrument.TradeData.get_today_low,
+                            "volume": Instrument.TradeData.get_volume
+                            }
+            try:
+                return OPTION_TABLE[option]
+            except KeyError:
+                print("'" + option + "'" + " is not a valid option.\nValid options are: \n" + "\n".join(tuple(OPTION_TABLE.keys())))
+                raise Exception
+            
 
-        if start_date >= earliest_record:
-            if end_date is None:
-                end_date = latest_record
-            elif end_date > latest_record:
-                raise ValueError("No data for " + str(end_date))
-            else:
-                try:
-                    assert start_date < end_date
-                except AssertionError:
-                    raise ValueError("Start date cannot come before end date.")
-                while True:
+        def _gen_graph(getter_func, start_date=start_date, end_date=end_date):
+            trade_data = self.get_trade_data()
+            earliest_record = trade_data.get_trade_days()[0].get_date()
+            latest_record = trade_data.get_trade_days()[-1].get_date()
+
+            if start_date >= earliest_record:
+                if end_date is None:
+                    end_date = latest_record
+                elif end_date > latest_record:
+                    raise ValueError("No data for " + str(end_date))
+                else:
                     try:
-                        index = trade_data.get_record_index_by_date(start_date)
-                        assert type(index) is int
+                        assert start_date < end_date
                     except AssertionError:
-                        start_date += datetime.timedelta(days=1)
-                    else:
-                        break
+                        raise ValueError("Start date cannot come before end date.")
+                    while True:
+                        try:
+                            index = trade_data.get_record_index_by_date(start_date)
+                            assert type(index) is int
+                        except AssertionError:
+                            start_date += datetime.timedelta(days=1)
+                        else:
+                            break
 
-                records = []
-                date = start_date
-                
-                while date < end_date:
-                    new_record = trade_data.get_trade_days()[index]
-                    records.append(new_record)
-                    date = new_record.get_date()
-                    index += 1
+                    records = []
+                    date = start_date
+                    
+                    while date < end_date:
+                        new_record = trade_data.get_trade_days()[index]
+                        records.append(new_record)
+                        date = new_record.get_date()
+                        index += 1
 
-                dates = [record.get_date() for record in records]
-                prices = [record.get_closing_price() for record in records]
+                    dates = [record.get_date() for record in records]
+                    data = [getter_func(record) for record in records]
 
-                pylab.figure(self.get_name() + " Stock Prices")
-                pylab.title(self.get_name() + " Prices against Time")
-                pylab.xlabel("Date")
-                pylab.ylabel("Price in " + self.get_currency())
-                pylab.xticks(rotation=-55)
-                pylab.grid()
-                pylab.plot(dates, prices)
-                pylab.show({"block":False})
+                    pylab.figure(self.get_name() + " " + option)
+                    pylab.title(self.get_name() + " " + option + " against Time")
+                    pylab.xlabel("Date")
+                    pylab.ylabel(option)
+                    pylab.xticks(rotation=-55)
+                    pylab.grid()
+                    pylab.plot(dates, data)
+                    pylab.show()
 
-        else:
-            raise ValueError("No data for " + str(start_date))
+            else:
+                raise ValueError("No data for " + str(start_date))
+
+        _gen_graph(_get_func(option))
 
     @utils.timing
     def store(self):
