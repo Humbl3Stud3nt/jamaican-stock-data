@@ -1,11 +1,12 @@
-web-scraping
-.vscode
-.vs
+/web-scraping
+/.vscode
+/.vs
+/__pycache__
 *.code-workspace
 *.sln
 *.pyproj
 *.pyc
-__pycache__
+
 .pytest_cache
 
 STOCK DATA SCRIPTS PURPOSE.md
