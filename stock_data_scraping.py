@@ -20,7 +20,7 @@ MAIN_MARKET_URL = "https://www.jamstockex.com/market-data/listed-companies/main-
 JR_MARKET_URL = "https://www.jamstockex.com/market-data/listed-companies/junior-market"
 
 
-@utils.timing
+#@utils.timing
 def get_soup(url, retries=10):
     """
     Return bs4.BeautifulSoup object representation of the page whose url is passed as 'url'
@@ -45,7 +45,7 @@ def get_soup(url, retries=10):
     page.close()
     return page_soup
 
-@utils.timing
+#@utils.timing
 def get_company_data(mkt_soup):
     """
     Return list of Instrument objects detailing company data for all companies listed on the Jamaica stock exchange
@@ -80,7 +80,7 @@ def get_company_data(mkt_soup):
     return companies
 
 
-@utils.timing
+#@utils.timing
 def get_trading_data(trading_soup):
     """
     Return Instrument.TradeDataBanks object containing data for each trade day of a particular Instrument
@@ -145,7 +145,7 @@ def get_trading_data(trading_soup):
     return Instrument.TradeDataBanks(trade_days)
 
 
-@utils.timing
+#@utils.timing
 def update(self):
     """
     Check http://www.jamstockex.com for new data

@@ -161,7 +161,7 @@ class Instrument(object):
 
         _gen_graph(_get_func(option))
 
-    @utils.timing
+    #@utils.timing
     def store(self):
         file_path = "TRADE_DATA" + os.path.sep + self.file_path
         with open(file_path, "w") as fp:
