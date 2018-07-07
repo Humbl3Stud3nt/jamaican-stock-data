@@ -5,4 +5,7 @@ web-scraping
 *.sln
 *.pyproj
 *.pyc
+__pycache__
+.pytest_cache
+
 STOCK DATA SCRIPTS PURPOSE.md
