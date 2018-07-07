@@ -1,7 +1,8 @@
 /web-scraping
 /.vscode
 /.vs
-/__pycache__
+__pycache__
+TRADE_DATA/__pycache__
 /*.code-workspace
 /*.sln
 /*.pyproj
