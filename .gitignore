@@ -2,11 +2,11 @@
 /.vscode
 /.vs
 /__pycache__
-*.code-workspace
-*.sln
-*.pyproj
-*.pyc
+/*.code-workspace
+/*.sln
+/*.pyproj
+*/*.pyc
 
-.pytest_cache
+./.pytest_cache
 
 STOCK DATA SCRIPTS PURPOSE.md
