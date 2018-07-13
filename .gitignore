@@ -2,7 +2,7 @@
 /.vscode
 /.vs
 __pycache__
-TRADE_DATA/__pycache__
+/TRADE_DATA
 /*.code-workspace
 /*.sln
 /*.pyproj
