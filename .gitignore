@@ -1,13 +1,13 @@
-/web-scraping
-/.vscode
-/.vs
+env/
+USERS/
+.vscode
+.vs
+TRADE_DATA
 __pycache__
-/TRADE_DATA
-/*.code-workspace
-/*.sln
-/*.pyproj
-*/*.pyc
-
-./.pytest_cache
+.pytest_cache
+*.code-workspace
+*.sln
+*.pyproj
+*.pyc
 gui.py
 STOCK DATA SCRIPTS PURPOSE.md
