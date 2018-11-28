@@ -15,14 +15,24 @@ Features:
 import datetime
 import os
 import pprint
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 import pylab
+from bs4 import BeautifulSoup as Soup
 
+import stock_data_scraping as scr
 import utils
 
 # TODO:
 # Implement data representation methods for stock Instruments
 # CONSTANTS
+ILLEGAL_NUM_CHARS = ('!', '"', '#', '$', '%',
+                     '&', "'", '(', ')', '*',
+                     '+', ',', '-', '/', ':',
+                     ';', '<', '=', '>', '?',
+                     '@', '[', '\\', ']', '^',
+                     '_', '`', '{', '|', '}', '~')
 TRADING_DATA_URL_BASE = "https://www.jamstockex.com/market-data/download-data/price-history/"
 
 # Debugging flag
@@ -80,29 +90,37 @@ class Instrument(object):
         self.trade_data = Instrument.TradeDataBanks.__add__(
             self.trade_data, trade_data)
 
+    def update(self):
+        """
+        Check http://www.jamstockex.com for new data
+        Update trade_data and change self.last_updated value to the current utc timestamp
+        """
+        trade_data_url = self.gen_trade_data_url()
+        self.update_trade_data(get_trading_data(scr.get_soup(trade_data_url)))
+        self.last_updated = datetime.datetime.timestamp(
+            datetime.datetime.utcnow())
 
-
-    def plot_for(self, period="3-m", option="closing price"):
-        """"
+    def get_figure_for_past(self, period="3-m", option="closing price"):
+        """
         Plot for a period of time up to the current date
         """
         num_days = _parse_period(period)
         end_date = self.trade_data.get_trade_days()[-1].get_date()
         start_date = end_date - datetime.timedelta(num_days)
-        self.plot(start_date, end_date, option)
+        return self.get_figure(start_date, end_date, option)
 
-    def plot(self, start_date, end_date=None, option="closing price"):
+    def get_figure(self, start_date, end_date=None, option="closing price"):
         """
-        Create a graph showing the value of selected metrics over a certain period of time,
-        specified by 'start_date' and 'end_date' and 'option'
+        Return tuples of dates and values of selected metrics
+        (specified by 'option'), from 'start-date' to 'end_date'
         """
         def _get_func(option):
-            OPTION_TABLE = {"closing price":Instrument.TradeData.get_closing_price,
-                            "cur_year_dvds":Instrument.TradeData.get_current_dividends,
-                            "prev_year_dvds": Instrument.TradeData.get_prev_dividends,
-                            "day_high":Instrument.TradeData.get_today_high,
-                            "day_low": Instrument.TradeData.get_today_low,
-                            "volume": Instrument.TradeData.get_volume
+            OPTION_TABLE = {"closing price":(Instrument.TradeData.get_closing_price, "Closing Price (JMD)"),
+                            "cur_year_dvds":(Instrument.TradeData.get_current_dividends, "Current Year Dividends (JMD)"),
+                            "prev_year_dvds": (Instrument.TradeData.get_prev_dividends, "Previous Year Dividends (JMD)"),
+                            "day_high":(Instrument.TradeData.get_today_high, "Today's High (JMD)"),
+                            "day_low": (Instrument.TradeData.get_today_low, "Today's Low (JMD)"),
+                            "volume": (Instrument.TradeData.get_volume, "Volume Traded")
                             }
             try:
                 return OPTION_TABLE[option]
@@ -111,7 +129,7 @@ class Instrument(object):
                 raise Exception
             
 
-        def _gen_graph(getter_func, start_date=start_date, end_date=end_date):
+        def _get_fig(getter_func, y_label, start_date=start_date, end_date=end_date):
             trade_data = self.get_trade_data()
             earliest_record = trade_data.get_trade_days()[0].get_date()
             latest_record = trade_data.get_trade_days()[-1].get_date()
@@ -144,22 +162,25 @@ class Instrument(object):
                         date = new_record.get_date()
                         index += 1
 
-                    dates = [record.get_date() for record in records]
-                    data = [getter_func(record) for record in records]
+                    dates = tuple([record.get_date() for record in records])
+                    data = tuple([getter_func(record) for record in records])
 
-                    pylab.figure(self.get_name() + " " + option)
-                    pylab.title(self.get_name() + " " + option + " against Time")
-                    pylab.xlabel("Date")
-                    pylab.ylabel(option)
-                    pylab.xticks(rotation=-55)
-                    pylab.grid()
-                    pylab.plot(dates, data)
-                    pylab.show()
+                    figure = pylab.matplotlib.figure.Figure(figsize=(5,4), dpi=100)
+                    subplot = figure.add_subplot(111, xlabel="Date", ylabel=y_label, title="{} {} for past ... ".format(self.name, y_label))
+                    subplot.grid()
+                    subplot.plot(dates, data)
+                    # figure.add_subplot(subplot)
+                    # figure.add_subplot(111).xlabel("Date")
+                    # figure.add_subplot(111).ylabel(y_label)
+                    # figure.add_subplot(111).xticks(rotation=-55)
+                    # figure.add_subplot(111).grid()
+
+                    return figure
 
             else:
                 raise ValueError("No data for " + str(start_date))
 
-        _gen_graph(_get_func(option))
+        return _get_fig(*_get_func(option))
 
     #@utils.timing
     def store(self):
@@ -378,12 +399,177 @@ def _parse_period(period_code):
             num_days = int(mult)*UNITS[unit]
             return num_days
 
+#@utils.timing
+def get_company_data(mkt_soup):
+    """
+    Return list of Instrument objects detailing company data for all companies listed on the Jamaica stock exchange
+    Accepts bs4.BeautifulSoup object as an argument
+    Assumes that mkt_soup is a bs4.BeautifulSoup object referencing a page on the Jamaica stock exchange
+    """
+    # Finds table of companies listed on the Jamaica stock exchange
+    assert isinstance(mkt_soup, Soup)
+    company_listing_table = mkt_soup.find("table")
+
+    rows = company_listing_table.findAll("tr")[1:]  # Excludes headers
+    companies = []
+    for row in rows:
+        company_info = row.findAll("td")
+        name = company_info[0].text.strip()
+        if "(SUSPENDED)" in name:  # Skip this instrument and move to the next
+            continue
+        code = company_info[1].text.strip()
+        currency = company_info[2].text
+
+        # If the sector is given, use store that text and use column 5 as the share type
+        if len(company_info) == 6:
+            sector = company_info[3].text
+            share_type = company_info[4].text
+        # If sector is not given, set sector as "N/A" and use column 4 as the share type
+        elif len(company_info) == 5:
+            sector = "N/A"
+            share_type = company_info[3].text
+
+        companies.append(Instrument(name, code, currency,
+                                    s_type=share_type, business_sector=sector))
+    return companies
+
+
+#@utils.timing
+def get_trading_data(trading_soup):
+    """
+    Return Instrument.TradeDataBanks object containing data for each trade day of a particular Instrument
+    """
+    assert isinstance(trading_soup, Soup)
+
+    def _clean_num(num_string):
+        """
+        Return a formatted string of a number to be converted to float or int
+        """
+        num_string = num_string.strip()
+        for char in ILLEGAL_NUM_CHARS:
+            if char in num_string:
+                num_string = num_string.replace(char, "")
+        return num_string
+
+    trade_days = []
+    table_rows = trading_soup.find("table").find("tbody").findAll("tr")
+
+    for row in table_rows:
+        # Create Instrument.TradeData object for each row of data
+        columns = row.findAll("td")
+        # TODO: Make this fail more loudly
+
+        # Check if on the right page, if not, return None
+        try:
+            date_text = columns[1].text.strip()
+        except:
+            return None
+        else:
+            # Extract date
+            date_values = date_text.split("-")
+            date = datetime.date(int(date_values[0]), int(
+                date_values[1]), int(date_values[2]))
+
+            # Extract current year high and current year low
+            cur_yr_high, cur_yr_low = float(_clean_num(
+                columns[3].text)), float(_clean_num(columns[4].text))
+
+            # Extract previous year dividends
+            prev_yr_dvds = _clean_num(columns[5].text)
+            if prev_yr_dvds.isdecimal():
+                prev_yr_dvds = float(prev_yr_dvds)
+            else:
+                prev_yr_dvds = 0.0
+
+            # Extract current year dividends
+            cur_yr_dvds = _clean_num(columns[6].text)
+            if cur_yr_dvds.isdecimal():
+                cur_yr_dvds = float(cur_yr_dvds)
+            else:
+                cur_yr_dvds = 0.0
+
+            volume = int(_clean_num(columns[7].text))
+            today_high = float(_clean_num(columns[8].text))
+            today_low = float(_clean_num(columns[9].text))
+            last_traded_price = float(_clean_num(columns[10].text))
+            closing_price = float(_clean_num(columns[11].text))
+
+            trade_days.append(Instrument.TradeData(date=date, cur_yr_high=cur_yr_high, cur_yr_low=cur_yr_low, prev_yr_dvds=prev_yr_dvds,
+                                                   cur_yr_dvds=cur_yr_dvds, vol=volume, today_high=today_high, today_low=today_low, last_traded_price=last_traded_price, closing_price=closing_price))
+    return Instrument.TradeDataBanks(trade_days)
+
+def update_companies():
+    """
+    Update COMPANY_DATA.py file with Instrument objects for all companies on the JSE
+    """
+    print("Attempting to update...")
+    file_path = "COMPANY_DATA.py"
+
+    try:
+        urlopen("https://www.jamstockex.com")
+    except HTTPError:
+        raise Exception("Could not update.")
+    except URLError:
+        raise Exception("Could not update.")
+    else:
+        print("Updating list of companies...")
+        companies = []
+        for company in get_company_data(scr.get_soup(scr.MAIN_MARKET_URL)):
+            companies.append(company)
+        for company in get_company_data(scr.get_soup(scr.JR_MARKET_URL)):
+            companies.append(company)
+        with open(file_path, "w") as fp:
+            fp.write("###############################\n")
+            fp.write("# DO NOT EDIT THIS FILE!!!!!!!#\n")
+            fp.write("###############################\n")
+            fp.write("import datetime\n")
+            fp.write("from stock_data import Instrument\n")
+            fp.write("ALL_DATA = " + pprint.pformat(companies, indent=4))
+        print("Successfully updated.")
+
+def load_companies():
+    """
+    Create generator object listing companies in COMPANY_DATA.ALL_DATA"""
+    try:
+        from COMPANY_DATA import ALL_DATA
+    except:
+        print("Data not found.\nAttempting to populate file...")
+        update_companies()
+        from COMPANY_DATA import ALL_DATA
+    finally:
+        companies = ALL_DATA
+        for company in companies:
+            yield company
+
+
+def store_data():
+    """
+    Write all trade_data to a file for each instrument.
+    """
+    for company in load_companies():
+        company.update()
+        company.store()
+        print("Successfully stored: " + company.get_name() + " data.\n")
+
+
+def update_and_store():
+    """
+    Update trade data for all instruments
+    """
+    update_companies()
+    store_data()
+
+
+def full_update():
+    update_companies()
+    update_and_store()
+
+
 if __name__ == "__main__":
     if DEBUG:  # Run unit tests
         import test_stock_data
         test_stock_data.main()
     else:
-        from stock_data_scraping import update_and_store
         while True:
             choice = input("You are about to update the entire database. Are you sure you wan to do this? (Y/N)\n\n")
             print("\n")

@@ -3,4 +3,4 @@
 ###############################
 import datetime
 from stock_data import Instrument
-DATA = Instrument("JMMB GROUP 7.00% VR JMD CR PREFERENCE SHARES", "JMMB7.50NC", "JMD", "PREFERENCE", "FINANCE", None, last_updated=1530852852.94111)
+DATA = Instrument("JMMB GROUP 7.00% VR JMD CR PREFERENCE SHARES", "JMMB7.50NC", "JMD", "PREFERENCE", "FINANCE", None, last_updated=1537152505.437364)

@@ -3,4 +3,4 @@
 ###############################
 import datetime
 from stock_data import Instrument
-DATA = Instrument("Jamaica Public Service Co. 5%", "JPS5", "JMD", "PREFERENCE", "", None, last_updated=1530852814.915714)
+DATA = Instrument("JAMAICA PUBLIC SERVICE CO. 5%", "JPS5", "JMD", "PREFERENCE", "", None, last_updated=1537152468.01864)
